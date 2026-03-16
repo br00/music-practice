@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Music Practice</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0e0e12;
+      --surface: #16161d;
+      --surface2: #1e1e28;
+      --border: #2a2a38;
+      --accent: #7c6af5;
+      --accent-dim: #3d3478;
+      --text: #e8e8f0;
+      --muted: #6b6b88;
+      --done: #4caf82;
+      --done-dim: #1e3d30;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      min-height: 100vh;
+      padding: 1.5rem 1rem 4rem;
+      max-width: 480px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      color: var(--muted);
+      text-transform: uppercase;
+      margin-bottom: 0.25rem;
+    }
+
+    .subtitle {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-bottom: 2rem;
+    }
+
+    /* Streak bar */
+    .streak-bar {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1rem 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .streak-number {
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: var(--accent);
+      line-height: 1;
+    }
+
+    .streak-label {
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-top: 0.2rem;
+    }
+
+    .streak-dots {
+      display: flex;
+      gap: 6px;
+      margin-left: auto;
+    }
+
+    .streak-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--border);
+    }
+
+    .streak-dot.active {
+      background: var(--accent);
+    }
+
+    /* Week section */
+    .week-label {
+      font-size: 0.75rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 0.75rem;
+    }
+
+    .sessions {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      margin-bottom: 2rem;
+    }
+
+    .session-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1rem 1.25rem;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      position: relative;
+    }
+
+    .session-card.done {
+      border-color: var(--done-dim);
+      background: var(--done-dim);
+    }
+
+    .session-card:active {
+      opacity: 0.85;
+    }
+
+    .session-top {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+    }
+
+    .session-check {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      border: 2px solid var(--border);
+      flex-shrink: 0;
+      margin-top: 2px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+
+    .session-card.done .session-check {
+      background: var(--done);
+      border-color: var(--done);
+      color: #fff;
+    }
+
+    .session-check svg {
+      display: none;
+    }
+
+    .session-card.done .session-check svg {
+      display: block;
+    }
+
+    .session-info { flex: 1; }
+
+    .session-day {
+      font-size: 0.72rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      margin-bottom: 0.2rem;
+    }
+
+    .session-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .session-card.done .session-title {
+      color: var(--done);
+    }
+
+    .session-desc {
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-top: 0.2rem;
+    }
+
+    .session-duration {
+      font-size: 0.75rem;
+      color: var(--muted);
+      flex-shrink: 0;
+    }
+
+    /* Note area */
+    .note-area {
+      margin-top: 0.75rem;
+      display: none;
+    }
+
+    .note-area.open {
+      display: block;
+    }
+
+    .note-input {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-size: 0.82rem;
+      padding: 0.6rem 0.75rem;
+      resize: none;
+      outline: none;
+      font-family: inherit;
+      line-height: 1.5;
+    }
+
+    .note-input:focus {
+      border-color: var(--accent);
+    }
+
+    .note-input::placeholder {
+      color: var(--muted);
+    }
+
+    .note-saved {
+      font-size: 0.75rem;
+      color: var(--done);
+      margin-top: 0.4rem;
+      display: none;
+    }
+
+    /* History */
+    .history-section { margin-top: 1rem; }
+
+    .history-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 0.75rem 1rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .history-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.3rem;
+    }
+
+    .history-title {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--done);
+    }
+
+    .history-date {
+      font-size: 0.72rem;
+      color: var(--muted);
+    }
+
+    .history-note {
+      font-size: 0.78rem;
+      color: var(--muted);
+      font-style: italic;
+    }
+
+    .empty-history {
+      font-size: 0.82rem;
+      color: var(--muted);
+      text-align: center;
+      padding: 1.5rem 0;
+    }
+
+    /* Reset button */
+    .reset-btn {
+      display: block;
+      width: 100%;
+      margin-top: 2rem;
+      padding: 0.75rem;
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--muted);
+      font-size: 0.82rem;
+      cursor: pointer;
+      transition: border-color 0.2s, color 0.2s;
+    }
+
+    .reset-btn:hover {
+      border-color: var(--accent-dim);
+      color: var(--text);
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Music Practice</h1>
+  <p class="subtitle" id="week-subtitle"></p>
+
+  <div class="streak-bar">
+    <div>
+      <div class="streak-number" id="streak-count">0</div>
+      <div class="streak-label">week streak</div>
+    </div>
+    <div class="streak-dots" id="streak-dots"></div>
+  </div>
+
+  <div class="week-label">This week</div>
+  <div class="sessions" id="sessions-list"></div>
+
+  <div class="week-label">Past sessions</div>
+  <div class="history-section" id="history-list"></div>
+
+  <button class="reset-btn" onclick="resetWeek()">New week — reset sessions</button>
+
+  <script>
+    const SESSIONS = [
+      { id: 'monday',    day: 'Monday',    title: 'Guitar Course',    desc: 'Focused study — technique & theory',  duration: '2h' },
+      { id: 'wednesday', day: 'Wednesday', title: 'Ableton',          desc: 'One thing at a time on your song',    duration: '1h' },
+      { id: 'friday',    day: 'Friday',    title: 'Composing',        desc: 'Creative work — just make music',     duration: '1–2h' },
+    ];
+
+    function getState() {
+      return JSON.parse(localStorage.getItem('music-practice') || '{"sessions":{},"history":[],"streak":0,"lastWeek":null}');
+    }
+
+    function saveState(state) {
+      localStorage.setItem('music-practice', JSON.stringify(state));
+    }
+
+    function getWeekKey() {
+      const now = new Date();
+      const jan1 = new Date(now.getFullYear(), 0, 1);
+      const week = Math.ceil(((now - jan1) / 86400000 + jan1.getDay() + 1) / 7);
+      return `${now.getFullYear()}-W${week}`;
+    }
+
+    function formatDate(iso) {
+      return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+    }
+
+    function render() {
+      const state = getState();
+      const weekKey = getWeekKey();
+
+      // Subtitle
+      const now = new Date();
+      document.getElementById('week-subtitle').textContent =
+        now.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
+
+      // Streak dots (last 8 weeks)
+      const dots = document.getElementById('streak-dots');
+      dots.innerHTML = '';
+      const streak = state.streak || 0;
+      document.getElementById('streak-count').textContent = streak;
+      for (let i = 0; i < 8; i++) {
+        const d = document.createElement('div');
+        d.className = 'streak-dot' + (i < streak ? ' active' : '');
+        dots.appendChild(d);
+      }
+
+      // Sessions
+      const list = document.getElementById('sessions-list');
+      list.innerHTML = '';
+
+      SESSIONS.forEach(s => {
+        const done = !!(state.sessions[s.id] && state.sessions[s.id].done);
+        const note = (state.sessions[s.id] && state.sessions[s.id].note) || '';
+
+        const card = document.createElement('div');
+        card.className = 'session-card' + (done ? ' done' : '');
+        card.innerHTML = `
+          <div class="session-top">
+            <div class="session-check">
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                <path d="M2 6l3 3 5-5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <div class="session-info">
+              <div class="session-day">${s.day}</div>
+              <div class="session-title">${s.title}</div>
+              <div class="session-desc">${s.desc}</div>
+            </div>
+            <div class="session-duration">${s.duration}</div>
+          </div>
+          <div class="note-area ${done ? 'open' : ''}" id="note-area-${s.id}">
+            <textarea class="note-input" id="note-${s.id}" rows="2" placeholder="What did you work on?">${note}</textarea>
+            <div class="note-saved" id="note-saved-${s.id}">Saved</div>
+          </div>
+        `;
+
+        // Toggle done on card click (not on textarea)
+        card.addEventListener('click', (e) => {
+          if (e.target.tagName === 'TEXTAREA') return;
+          toggleDone(s.id);
+        });
+
+        // Save note on input
+        const textarea = card.querySelector(`#note-${s.id}`);
+        textarea.addEventListener('input', () => saveNote(s.id, textarea.value));
+
+        list.appendChild(card);
+      });
+
+      // History
+      const histList = document.getElementById('history-list');
+      histList.innerHTML = '';
+      const history = (state.history || []).slice().reverse();
+      if (history.length === 0) {
+        histList.innerHTML = '<div class="empty-history">Completed sessions will appear here.</div>';
+      } else {
+        history.forEach(h => {
+          const item = document.createElement('div');
+          item.className = 'history-item';
+          item.innerHTML = `
+            <div class="history-top">
+              <div class="history-title">${h.title}</div>
+              <div class="history-date">${formatDate(h.date)}</div>
+            </div>
+            ${h.note ? `<div class="history-note">${h.note}</div>` : ''}
+          `;
+          histList.appendChild(item);
+        });
+      }
+    }
+
+    function toggleDone(id) {
+      const state = getState();
+      if (!state.sessions[id]) state.sessions[id] = {};
+      const wasDone = state.sessions[id].done;
+      state.sessions[id].done = !wasDone;
+
+      if (!wasDone) {
+        // Mark done — add to history
+        const session = SESSIONS.find(s => s.id === id);
+        state.history = state.history || [];
+        state.history.push({
+          id,
+          title: session.title,
+          note: state.sessions[id].note || '',
+          date: new Date().toISOString(),
+        });
+        checkStreakUpdate(state);
+      } else {
+        // Unmark — remove last matching history entry
+        state.history = state.history || [];
+        const idx = [...state.history].reverse().findIndex(h => h.id === id);
+        if (idx !== -1) state.history.splice(state.history.length - 1 - idx, 1);
+      }
+
+      saveState(state);
+      render();
+
+      // Open note area if marking done
+      if (!wasDone) {
+        const area = document.getElementById(`note-area-${id}`);
+        if (area) area.classList.add('open');
+        const ta = document.getElementById(`note-${id}`);
+        if (ta) setTimeout(() => ta.focus(), 50);
+      }
+    }
+
+    function saveNote(id, value) {
+      const state = getState();
+      if (!state.sessions[id]) state.sessions[id] = {};
+      state.sessions[id].note = value;
+
+      // Also update in history
+      if (state.history) {
+        for (let i = state.history.length - 1; i >= 0; i--) {
+          if (state.history[i].id === id) {
+            state.history[i].note = value;
+            break;
+          }
+        }
+      }
+
+      saveState(state);
+
+      const saved = document.getElementById(`note-saved-${id}`);
+      if (saved) {
+        saved.style.display = 'block';
+        setTimeout(() => { saved.style.display = 'none'; }, 1200);
+      }
+    }
+
+    function checkStreakUpdate(state) {
+      const weekKey = getWeekKey();
+      const allDone = SESSIONS.every(s => state.sessions[s.id] && state.sessions[s.id].done);
+      if (allDone && state.lastWeek !== weekKey) {
+        state.streak = (state.streak || 0) + 1;
+        state.lastWeek = weekKey;
+      }
+    }
+
+    function resetWeek() {
+      if (!confirm('Start a new week? This will clear this week\'s checkmarks (history stays).')) return;
+      const state = getState();
+      state.sessions = {};
+      saveState(state);
+      render();
+    }
+
+    render();
+  </script>
+</body>
+</html>
